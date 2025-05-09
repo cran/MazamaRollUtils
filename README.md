@@ -1,13 +1,16 @@
-[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/MazamaRollUtils)](https://cran.r-project.org/package=MazamaRollUtils)
-[![Downloads](http://cranlogs.r-pkg.org/badges/MazamaRollUtils)](https://cran.r-project.org/package=MazamaRollUtils)
-[![Build Status](https://travis-ci.org/MazamaScience/MazamaRollUtils.svg?branch=master)](https://travis-ci.org/MazamaScience/MazamaRollUtils)
+[![CRAN\_Status\_Badge](https://www.r-pkg.org/badges/version/MazamaRollUtils)](https://cran.r-project.org/package=MazamaRollUtils)
+[![Downloads](https://cranlogs.r-pkg.org/badges/MazamaRollUtils)](https://cran.r-project.org/package=MazamaRollUtils)
 
+A dedicated Slack channel has been created for announcements, support and to help 
+build a community of practice around this open source package. You may request an 
+invitation to join from jonathan.callahan@dri.com.
 
 # MazamaRollUtils
 
 ```
-A suite of utility functions for calculating rolling mins, means, 
-maxes and other functions.
+A suite of compiled functions calculating rolling mins, means,
+maxes and other statistics. This package is designed to meet the needs of
+data processing systems for environmental time series.
 ```
 
 ## Background
