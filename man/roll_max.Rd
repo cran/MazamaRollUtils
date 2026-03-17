@@ -17,7 +17,7 @@ roll_max(
 
 \item{width}{Integer width of the rolling window.}
 
-\item{by}{Integer shift to use when sliding the window to the next location}
+\item{by}{Integer shift by which the window is moved each iteration.}
 
 \item{align}{Character position of the return value within the window. One of:
 \code{"left" | "center" | "right"}.}
@@ -40,37 +40,34 @@ The \code{align} parameter determines the alignment of the return value
 within the window. Thus:
 
 \itemize{
-  \item{\code{align = -1 [*------]} will cause the returned vector to have width-1 \code{NA} values at the right end.}
-  \item{\code{align = 0  [---*---]} will cause the returned vector to have width/2 \code{NA} values at either end.}
-  \item{\code{align = 1  [------*]} will cause the returned vector to have width-1 \code{NA} values at the left end.}
+\item{\verb{align = "left"   [*------]} will cause the returned vector to have width - 1 \code{NA} values at the right end.}
+\item{\verb{align = "center" [---*---]} will cause the returned vector to have \code{NA} values at either end as needed for centered alignment.}
+\item{\verb{align = "right"  [------*]} will cause the returned vector to have width - 1 \code{NA} values at the left end.}
 }
 
-For large vectors, the\code{by} parameter can be used to force the window
+For large vectors, the \code{by} parameter can be used to force the window
 to jump ahead \code{by} indices for the next calculation. Indices that are
 skipped over will be assigned \code{NA} values so that the return vector still has
 the same length as the incoming vector. This can dramatically speed up
 calculations for high resolution time series data.
 }
 \examples{
-library(MazamaRollUtils)
-
 # Example air quality time series
 t <- example_pm25$datetime
 x <- example_pm25$pm25
 
 plot(t, x, pch = 16, cex = 0.5)
-lines(t, roll_max(x, width = 12), col = 'red')
-lines(t, roll_min(x, width = 12), col = 'deepskyblue')
+lines(t, roll_max(x, width = 12), col = "red")
+lines(t, roll_min(x, width = 12), col = "deepskyblue")
 title("12-hr Rolling Max and Min")
 
 plot(t, x, pch = 16, cex = 0.5)
 points(t, roll_max(x, width = 12, na.rm = TRUE),
-       pch = 16, col = 'red')
+       pch = 16, col = "red")
 points(t, roll_max(x, width = 12, na.rm = FALSE),
-       pch = 16, col = adjustcolor('black', 0.4))
+       pch = 16, col = adjustcolor("black", 0.4))
 legend("topright", pch = c(1, 16),
        col = c("red", adjustcolor("black", 0.4)),
        legend = c("na.rm = TRUE", "na.rm = FALSE"))
 title("12-hr Rolling max with/out na.rm")
-
 }

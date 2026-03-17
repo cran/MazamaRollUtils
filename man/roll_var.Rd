@@ -31,24 +31,23 @@ The \code{align} parameter determines the alignment of the return value
 within the window. Thus:
 
 \itemize{
-  \item{\code{align = -1 [*------]} will cause the returned vector to have width-1 \code{NA} values at the right end.}
-  \item{\code{align = 0  [---*---]} will cause the returned vector to have width/2 \code{NA} values at either end.}
-  \item{\code{align = 1  [------*]} will cause the returned vector to have width-1 \code{NA} values at the left end.}
+\item{\verb{align = "left"   [*------]} will cause the returned vector to have width - 1 \code{NA} values at the right end.}
+\item{\verb{align = "center" [---*---]} will cause the returned vector to have \code{NA} values at either end as needed for centered alignment.}
+\item{\verb{align = "right"  [------*]} will cause the returned vector to have width - 1 \code{NA} values at the left end.}
 }
 
-For large vectors, the\code{by} parameter can be used to force the window
+For large vectors, the \code{by} parameter can be used to force the window
 to jump ahead \code{by} indices for the next calculation. Indices that are
 skipped over will be assigned \code{NA} values so that the return vector still has
 the same length as the incoming vector. This can dramatically speed up
 calculations for high resolution time series data.
 }
 \note{
-No \code{na.rm} argument is provided as interpretation of the results
-is not at all clear.
+A \code{na.rm} argument is not provided for \code{roll_var()} because the
+statistical meaning of variance computed from partially missing windows may
+be ambiguous.
 }
 \examples{
-library(MazamaRollUtils)
-
 # Example air quality time series
 t <- example_pm25$datetime
 x <- example_pm25$pm25

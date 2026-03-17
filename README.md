@@ -44,7 +44,7 @@ install.packages('MazamaRollUtils')
 Install the latest version from GitHub with:
 
 ```
-devtools::install_github("MazamaScience/MazamaRollUtils")
+remotes::install_github("MazamaScience/MazamaRollUtils")
 ```
 
 ## Examples
@@ -60,7 +60,7 @@ plot(t, x)
 lines(t, roll_max(x, width = 12), col = 'salmon')
 lines(t, roll_min(x, width = 12), col = 'light blue')
 ```
-----
+------------------------------------------------------------------------
 
-This project is supported by Mazama Science.
+This project is supported by the [USFS AirFire](https://www.airfire.org) team.
 
