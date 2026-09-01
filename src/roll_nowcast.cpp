@@ -68,6 +68,13 @@ static double nowcastWindow(Rcpp::NumericVector const& x, int start, int end) {
     return NA_REAL;
   }
 
+  // When every valid value in the window is zero there is no rate of change
+  // to scale by and the NowCast is simply zero. Guarding here also avoids a
+  // 0 / 0 division in the scaling step below.
+  if (min_value == 0.0 && max_value == 0.0) {
+    return 0.0;
+  }
+
   // EPA NowCast scaling
   double scaled_rate = (max_value - min_value) / max_value;
 

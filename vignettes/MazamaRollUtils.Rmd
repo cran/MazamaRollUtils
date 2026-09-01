@@ -90,15 +90,20 @@ All of the `roll_~()` functions accept the same arguments where appropriate:
 * `width` -- Integer width of the rolling window.
 * `by` -- Integer shift to use when sliding the window to the next location
 * `align` -- Character position of the return value within the window. One of: `"left" | "center" | "right"`.
-* `na.rm` -- Logical specifying whether `NA` values should be removed 
+* `na.rm` -- Logical specifying whether `NA` values should be removed
 before the calculations within each window.
+* `min_valid` -- Integer minimum number of non-`NA` values a window must contain
+for that window to return a non-`NA` result. Supplying `min_valid` implies
+`NA`-tolerant counting regardless of `na.rm`. The default, `NULL`, applies no
+minimum.
 
 The `roll_mean()` function also accepts:
 
-* `weights` -- Numeric vector of size `width` specifying each window index weight. 
+* `weights` -- Numeric vector of size `width` specifying each window index weight.
 If `NULL`, unit weights are used.
 
-For statistical clarity, `roll_sd()` and `roll_var()` do not provide a `na.rm` argument.
+For statistical clarity, `roll_sd()` and `roll_var()` do not provide `na.rm` or
+`min_valid` arguments.
 
 The `roll_nowcast()` function only accepts the `x` argument and is defined as having:
 
@@ -110,9 +115,11 @@ The `roll_nowcast()` function only accepts the `x` argument and is defined as ha
 ### Predictable Return Length
 
 The output of each `roll_~()` function is guaranteed to have the same length as
-the input vector, with varying stretches of `NA` at one or both ends 
-depending on arguments `width`, `align` and `na.rm`. This makes it easy to 
-align the return values with the input data.
+the input vector, which makes it easy to align the return values with the input
+data. `NA` values appear in two ways: as stretches at one or both ends, where a
+full window cannot be formed (governed by `width`, `align` and `by`), and at any
+interior position whose window holds too few valid values to satisfy `na.rm` or
+`min_valid`.
 
 ## Examples
 

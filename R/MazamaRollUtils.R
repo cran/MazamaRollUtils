@@ -11,7 +11,7 @@
 #' rapidly changing conditions place more weight on the most recent hours,
 #' while stable conditions allow older hours to contribute more evenly.
 #'
-#' For every index in the incoming vector x, a value is returned that is the
+#' For every index in the incoming vector `x`, a value is returned that is the
 #' NowCast associated with that hour.
 #'
 #' This calculation is always right-aligned:
@@ -26,6 +26,9 @@
 #' Missing values are allowed, but at least 2 valid values must be present in
 #' the most recent 3 hours or the result for that index will be `NA`.
 #'
+#' A window whose valid values are all zero returns `0` (there is no rate of
+#' change to weight by).
+#'
 #' Returned values are rounded to one decimal place.
 #'
 #' @param x Numeric vector of hourly PM measurements.
@@ -39,7 +42,7 @@
 #' @export
 roll_nowcast <- function(x) {
 
-  if (!is.numeric(x)) {
+  if ( !is.atomic(x) || !is.numeric(x) || !is.null(dim(x)) ) {
     stop("'x' must be a numeric vector.")
   }
 
@@ -58,7 +61,13 @@ roll_nowcast <- function(x) {
 #'
 #' For every index in the incoming vector `x`, a value is returned that
 #' is the Hampel function of all values in `x` that fall within a window of width
-#' `width`.
+#' `width`. The score at each index compares the value at that index
+#' (`x[i]`) with the median and MAD of its window: `abs(x[i] - median) /
+#' (1.4826 * MAD)`. Larger scores indicate values less consistent with their
+#' neighborhood. With `align = "center"` the tested value sits at the middle
+#' of its window; with `align = "left"` or `"right"` it sits at the window
+#' edge. Outlier detection (see [findOutliers()]) is normally done with the
+#' default `align = "center"`.
 #'
 #' The `align` parameter determines the alignment of the return value
 #' within the window. Thus:
@@ -82,18 +91,26 @@ roll_nowcast <- function(x) {
 #' `"left" | "center" | "right"`.
 #' @param na.rm Logical specifying whether `NA` values should be removed
 #' before the calculations within each window.
+#' @param min_valid Integer minimum number of non-`NA` values that must fall
+#' within a window for that window to return a non-`NA` result. Supplying
+#' `min_valid` implies `NA`-tolerant counting within each window (as if
+#' `na.rm = TRUE`), regardless of `na.rm`. The default, `NULL`, applies no
+#' minimum.
 #'
 #' @return Numeric vector of the same length as `x`.
 #'
 #' @examples
 #' x <- c(0, 0, 0, 1, 1, 2, 2, 4, 6, 9, 0, 0, 0)
 #' roll_hampel(x, 3)
+#'
+#' @export
 roll_hampel <- function(
     x,
     width = 1L,
     by = 1L,
     align = c("center", "left", "right"),
-    na.rm = FALSE
+    na.rm = FALSE,
+    min_valid = NULL
 ) {
 
   args <- .validateRollArgs(
@@ -101,7 +118,8 @@ roll_hampel <- function(
     width = width,
     by = by,
     align = align,
-    na.rm = na.rm
+    na.rm = na.rm,
+    min_valid = min_valid
   )
 
   result <- .roll_hampel_cpp(
@@ -110,6 +128,10 @@ roll_hampel <- function(
     args$by,
     args$align,
     args$na.rm
+  )
+
+  result <- .applyMinValid(
+    result, args$x, args$width, args$by, args$align, args$min_valid
   )
 
   return(result)
@@ -125,6 +147,12 @@ roll_hampel <- function(
 #' is the Median Absolute Deviation (MAD) of all values in `x` that fall within
 #' a window of width `width`.
 #'
+#' The value returned is the *unscaled* MAD -- the median of the absolute
+#' deviations from the window median, with no consistency constant applied.
+#' This is equivalent to `stats::mad(window, constant = 1)`. Note that
+#' `stats::mad()` uses `constant = 1.4826` by default, so values from
+#' `roll_MAD()` are smaller than the `stats::mad()` default by that factor.
+#'
 #' The `align` parameter determines the alignment of the return value
 #' within the window. Thus:
 #'
@@ -147,6 +175,11 @@ roll_hampel <- function(
 #' `"left" | "center" | "right"`.
 #' @param na.rm Logical specifying whether `NA` values should be removed
 #' before the calculations within each window.
+#' @param min_valid Integer minimum number of non-`NA` values that must fall
+#' within a window for that window to return a non-`NA` result. Supplying
+#' `min_valid` implies `NA`-tolerant counting within each window (as if
+#' `na.rm = TRUE`), regardless of `na.rm`. The default, `NULL`, applies no
+#' minimum.
 #'
 #' @return Numeric vector of the same length as `x`.
 #'
@@ -156,12 +189,15 @@ roll_hampel <- function(
 #' roll_MAD(x, 3)
 #' roll_MAD(x, 5)
 #' roll_MAD(x, 7)
+#'
+#' @export
 roll_MAD <- function(
     x,
     width = 1L,
     by = 1L,
     align = c("center", "left", "right"),
-    na.rm = FALSE
+    na.rm = FALSE,
+    min_valid = NULL
 ) {
 
   args <- .validateRollArgs(
@@ -169,7 +205,8 @@ roll_MAD <- function(
     width = width,
     by = by,
     align = align,
-    na.rm = na.rm
+    na.rm = na.rm,
+    min_valid = min_valid
   )
 
   result <- .roll_MAD_cpp(
@@ -178,6 +215,10 @@ roll_MAD <- function(
     args$by,
     args$align,
     args$na.rm
+  )
+
+  result <- .applyMinValid(
+    result, args$x, args$width, args$by, args$align, args$min_valid
   )
 
   return(result)
@@ -215,6 +256,11 @@ roll_MAD <- function(
 #' `"left" | "center" | "right"`.
 #' @param na.rm Logical specifying whether `NA` values should be removed
 #' before the calculations within each window.
+#' @param min_valid Integer minimum number of non-`NA` values that must fall
+#' within a window for that window to return a non-`NA` result. Supplying
+#' `min_valid` implies `NA`-tolerant counting within each window (as if
+#' `na.rm = TRUE`), regardless of `na.rm`. The default, `NULL`, applies no
+#' minimum.
 #'
 #' @return Numeric vector of the same length as `x`.
 #'
@@ -237,12 +283,15 @@ roll_MAD <- function(
 #'        col = c("red", adjustcolor("black", 0.4)),
 #'        legend = c("na.rm = TRUE", "na.rm = FALSE"))
 #' title("12-hr Rolling max with/out na.rm")
+#'
+#' @export
 roll_max <- function(
     x,
     width = 1L,
     by = 1L,
     align = c("center", "left", "right"),
-    na.rm = FALSE
+    na.rm = FALSE,
+    min_valid = NULL
 ) {
 
   args <- .validateRollArgs(
@@ -250,7 +299,8 @@ roll_max <- function(
     width = width,
     by = by,
     align = align,
-    na.rm = na.rm
+    na.rm = na.rm,
+    min_valid = min_valid
   )
 
   result <- .roll_max_cpp(
@@ -259,6 +309,10 @@ roll_max <- function(
     args$by,
     args$align,
     args$na.rm
+  )
+
+  result <- .applyMinValid(
+    result, args$x, args$width, args$by, args$align, args$min_valid
   )
 
   return(result)
@@ -302,6 +356,11 @@ roll_max <- function(
 #' before the calculations within each window.
 #' @param weights Numeric vector of length `width` specifying each window
 #' index weight. If `NULL`, unit weights are used.
+#' @param min_valid Integer minimum number of non-`NA` values that must fall
+#' within a window for that window to return a non-`NA` result. Supplying
+#' `min_valid` implies `NA`-tolerant counting within each window (as if
+#' `na.rm = TRUE`), regardless of `na.rm`. The default, `NULL`, applies no
+#' minimum.
 #'
 #' @return Numeric vector of the same length as `x`.
 #'
@@ -317,13 +376,16 @@ roll_max <- function(
 #'        col = c("goldenrod", "purple"),
 #'        legend = c("3-hr mean", "23-hr mean"))
 #' title("3- and 23-hr Rolling mean")
+#'
+#' @export
 roll_mean <- function(
     x,
     width = 1L,
     by = 1L,
     align = c("center", "left", "right"),
     na.rm = FALSE,
-    weights = NULL
+    weights = NULL,
+    min_valid = NULL
 ) {
 
   args <- .validateRollArgs(
@@ -332,7 +394,8 @@ roll_mean <- function(
     by = by,
     align = align,
     na.rm = na.rm,
-    weights = weights
+    weights = weights,
+    min_valid = min_valid
   )
 
   result <- .roll_mean_cpp(
@@ -342,6 +405,10 @@ roll_mean <- function(
     args$align,
     args$na.rm,
     args$weights
+  )
+
+  result <- .applyMinValid(
+    result, args$x, args$width, args$by, args$align, args$min_valid
   )
 
   return(result)
@@ -379,6 +446,11 @@ roll_mean <- function(
 #' `"left" | "center" | "right"`.
 #' @param na.rm Logical specifying whether `NA` values should be removed
 #' before the calculations within each window.
+#' @param min_valid Integer minimum number of non-`NA` values that must fall
+#' within a window for that window to return a non-`NA` result. Supplying
+#' `min_valid` implies `NA`-tolerant counting within each window (as if
+#' `na.rm = TRUE`), regardless of `na.rm`. The default, `NULL`, applies no
+#' minimum.
 #'
 #' @return Numeric vector of the same length as `x`.
 #'
@@ -394,12 +466,15 @@ roll_mean <- function(
 #'        col = c("goldenrod", "purple"),
 #'        legend = c("3-hr median", "23-hr median"))
 #' title("3- and 23-hr Rolling median")
+#'
+#' @export
 roll_median <- function(
     x,
     width = 1L,
     by = 1L,
     align = c("center", "left", "right"),
-    na.rm = FALSE
+    na.rm = FALSE,
+    min_valid = NULL
 ) {
 
   args <- .validateRollArgs(
@@ -407,7 +482,8 @@ roll_median <- function(
     width = width,
     by = by,
     align = align,
-    na.rm = na.rm
+    na.rm = na.rm,
+    min_valid = min_valid
   )
 
   result <- .roll_median_cpp(
@@ -416,6 +492,10 @@ roll_median <- function(
     args$by,
     args$align,
     args$na.rm
+  )
+
+  result <- .applyMinValid(
+    result, args$x, args$width, args$by, args$align, args$min_valid
   )
 
   return(result)
@@ -453,6 +533,11 @@ roll_median <- function(
 #' `"left" | "center" | "right"`.
 #' @param na.rm Logical specifying whether `NA` values should be removed
 #' before the calculations within each window.
+#' @param min_valid Integer minimum number of non-`NA` values that must fall
+#' within a window for that window to return a non-`NA` result. Supplying
+#' `min_valid` implies `NA`-tolerant counting within each window (as if
+#' `na.rm = TRUE`), regardless of `na.rm`. The default, `NULL`, applies no
+#' minimum.
 #'
 #' @return Numeric vector of the same length as `x`.
 #'
@@ -475,12 +560,15 @@ roll_median <- function(
 #'        col = c("deepskyblue", adjustcolor("black", 0.4)),
 #'        legend = c("na.rm = TRUE", "na.rm = FALSE"))
 #' title("12-hr Rolling min with/out na.rm")
+#'
+#' @export
 roll_min <- function(
     x,
     width = 1L,
     by = 1L,
     align = c("center", "left", "right"),
-    na.rm = FALSE
+    na.rm = FALSE,
+    min_valid = NULL
 ) {
 
   args <- .validateRollArgs(
@@ -488,7 +576,8 @@ roll_min <- function(
     width = width,
     by = by,
     align = align,
-    na.rm = na.rm
+    na.rm = na.rm,
+    min_valid = min_valid
   )
 
   result <- .roll_min_cpp(
@@ -497,6 +586,10 @@ roll_min <- function(
     args$by,
     args$align,
     args$na.rm
+  )
+
+  result <- .applyMinValid(
+    result, args$x, args$width, args$by, args$align, args$min_valid
   )
 
   return(result)
@@ -534,6 +627,11 @@ roll_min <- function(
 #' `"left" | "center" | "right"`.
 #' @param na.rm Logical specifying whether `NA` values should be removed
 #' before the calculations within each window.
+#' @param min_valid Integer minimum number of non-`NA` values that must fall
+#' within a window for that window to return a non-`NA` result. Supplying
+#' `min_valid` implies `NA`-tolerant counting within each window (as if
+#' `na.rm = TRUE`), regardless of `na.rm`. The default, `NULL`, applies no
+#' minimum.
 #'
 #' @return Numeric vector of the same length as `x`.
 #'
@@ -544,12 +642,15 @@ roll_min <- function(
 #'
 #' x[1:10]
 #' roll_prod(x, width = 5)[1:10]
+#'
+#' @export
 roll_prod <- function(
     x,
     width = 1L,
     by = 1L,
     align = c("center", "left", "right"),
-    na.rm = FALSE
+    na.rm = FALSE,
+    min_valid = NULL
 ) {
 
   args <- .validateRollArgs(
@@ -557,7 +658,8 @@ roll_prod <- function(
     width = width,
     by = by,
     align = align,
-    na.rm = na.rm
+    na.rm = na.rm,
+    min_valid = min_valid
   )
 
   result <- .roll_prod_cpp(
@@ -566,6 +668,10 @@ roll_prod <- function(
     args$by,
     args$align,
     args$na.rm
+  )
+
+  result <- .applyMinValid(
+    result, args$x, args$width, args$by, args$align, args$min_valid
   )
 
   return(result)
@@ -616,6 +722,8 @@ roll_prod <- function(
 #'
 #' x[1:10]
 #' roll_sd(x, width = 5)[1:10]
+#'
+#' @export
 roll_sd <- function(
     x,
     width = 1L,
@@ -673,6 +781,11 @@ roll_sd <- function(
 #' `"left" | "center" | "right"`.
 #' @param na.rm Logical specifying whether `NA` values should be removed
 #' before the calculations within each window.
+#' @param min_valid Integer minimum number of non-`NA` values that must fall
+#' within a window for that window to return a non-`NA` result. Supplying
+#' `min_valid` implies `NA`-tolerant counting within each window (as if
+#' `na.rm = TRUE`), regardless of `na.rm`. The default, `NULL`, applies no
+#' minimum.
 #'
 #' @return Numeric vector of the same length as `x`.
 #'
@@ -683,12 +796,15 @@ roll_sd <- function(
 #'
 #' x[1:10]
 #' roll_sum(x, width = 5)[1:10]
+#'
+#' @export
 roll_sum <- function(
     x,
     width = 1L,
     by = 1L,
     align = c("center", "left", "right"),
-    na.rm = FALSE
+    na.rm = FALSE,
+    min_valid = NULL
 ) {
 
   args <- .validateRollArgs(
@@ -696,7 +812,8 @@ roll_sum <- function(
     width = width,
     by = by,
     align = align,
-    na.rm = na.rm
+    na.rm = na.rm,
+    min_valid = min_valid
   )
 
   result <- .roll_sum_cpp(
@@ -705,6 +822,10 @@ roll_sum <- function(
     args$by,
     args$align,
     args$na.rm
+  )
+
+  result <- .applyMinValid(
+    result, args$x, args$width, args$by, args$align, args$min_valid
   )
 
   return(result)
@@ -754,6 +875,8 @@ roll_sum <- function(
 #'
 #' x[1:10]
 #' roll_var(x, width = 5)[1:10]
+#'
+#' @export
 roll_var <- function(
     x,
     width = 1L,
@@ -785,7 +908,8 @@ roll_var <- function(
     by,
     align,
     na.rm = NULL,
-    weights = NULL
+    weights = NULL,
+    min_valid = NULL
 ) {
 
   if ( !is.atomic(x) || !is.numeric(x) || !is.null(dim(x)) ) {
@@ -797,9 +921,17 @@ roll_var <- function(
     stop("'width' must be a single positive integer.")
   }
 
+  if ( width > length(x) ) {
+    stop("'width' cannot be larger than 'x'.")
+  }
+
   if ( length(by) != 1 || !is.numeric(by) || is.na(by) ||
        !is.finite(by) || by < 1 || by != as.integer(by) ) {
     stop("'by' must be a single positive integer.")
+  }
+
+  if ( by > length(x) ) {
+    stop("'by' cannot be larger than 'x'.")
   }
 
   align <- match.arg(align, c("center", "left", "right"))
@@ -810,12 +942,30 @@ roll_var <- function(
     }
   }
 
+  if ( !is.null(min_valid) ) {
+    if ( length(min_valid) != 1 || !is.numeric(min_valid) || is.na(min_valid) ||
+         !is.finite(min_valid) || min_valid < 1 ||
+         min_valid != as.integer(min_valid) ) {
+      stop("'min_valid' must be a single positive integer.")
+    }
+    if ( min_valid > as.integer(width) ) {
+      stop("'min_valid' cannot be larger than 'width'.")
+    }
+    # A minimum-valid-count threshold implies NA-tolerant counting within each
+    # window, so the calculation proceeds as if na.rm = TRUE regardless of the
+    # value supplied.
+    na.rm <- TRUE
+  }
+
   if ( !is.null(weights) ) {
     if ( !is.atomic(weights) || !is.numeric(weights) || !is.null(dim(weights)) ) {
       stop("'weights' must be NULL or a numeric vector.")
     }
     if ( anyNA(weights) || any(!is.finite(weights)) ) {
       stop("'weights' must not contain NA, NaN, or infinite values.")
+    }
+    if ( any(weights < 0) ) {
+      stop("'weights' must not contain negative values.")
     }
     if ( length(weights) != as.integer(width) ) {
       stop("'weights' must have length equal to 'width'.")
@@ -828,6 +978,31 @@ roll_var <- function(
     by = as.integer(by),
     align = align,
     na.rm = na.rm,
-    weights = weights
+    weights = weights,
+    min_valid = if (is.null(min_valid)) NULL else as.integer(min_valid)
   ))
+}
+
+# Set to NA any result position whose window held fewer than 'min_valid' non-NA
+# values. The rolling count of valid values is computed with roll_sum() on a
+# 0/1 indicator, which reuses the same window geometry (width, by, align) and
+# end padding, so 'valid_count' is NA in exactly the positions where 'result'
+# is already NA.
+.applyMinValid <- function(result, x, width, by, align, min_valid) {
+
+  if ( is.null(min_valid) ) {
+    return(result)
+  }
+
+  valid_count <- roll_sum(
+    as.numeric(!is.na(x)),
+    width = width,
+    by = by,
+    align = align,
+    na.rm = FALSE
+  )
+
+  result[!is.na(valid_count) & valid_count < min_valid] <- NA_real_
+
+  return(result)
 }

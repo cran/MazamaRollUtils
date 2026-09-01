@@ -10,7 +10,8 @@ roll_mean(
   by = 1L,
   align = c("center", "left", "right"),
   na.rm = FALSE,
-  weights = NULL
+  weights = NULL,
+  min_valid = NULL
 )
 }
 \arguments{
@@ -28,6 +29,12 @@ before the calculations within each window.}
 
 \item{weights}{Numeric vector of length \code{width} specifying each window
 index weight. If \code{NULL}, unit weights are used.}
+
+\item{min_valid}{Integer minimum number of non-\code{NA} values that must fall
+within a window for that window to return a non-\code{NA} result. Supplying
+\code{min_valid} implies \code{NA}-tolerant counting within each window (as if
+\code{na.rm = TRUE}), regardless of \code{na.rm}. The default, \code{NULL}, applies no
+minimum.}
 }
 \value{
 Numeric vector of the same length as \code{x}.
@@ -71,4 +78,5 @@ legend("topright", lty = c(1, 1),
        col = c("goldenrod", "purple"),
        legend = c("3-hr mean", "23-hr mean"))
 title("3- and 23-hr Rolling mean")
+
 }

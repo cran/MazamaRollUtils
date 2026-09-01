@@ -32,6 +32,14 @@ test_that("roll_nowcast returns average for flat data", {
   expect_equal(nowcast[12], 20)
 })
 
+test_that("roll_nowcast returns zero for an all-zero window", {
+  pm25 <- rep(0, 12)
+  nowcast <- roll_nowcast(pm25)
+
+  expect_equal(nowcast[12], 0)
+  expect_false(anyNA(nowcast[-1]))
+})
+
 test_that("roll_nowcast values are rounded to one decimal place", {
   pm25 <- rep(20.12345, 12)
   nowcast <- roll_nowcast(pm25)
@@ -75,6 +83,13 @@ test_that("roll_nowcast requires at least 2 valid values in the most recent 3 ho
 test_that("roll_nowcast rejects non-numeric input", {
   expect_error(
     roll_nowcast(c("a", "b", "c")),
+    "'x' must be a numeric vector."
+  )
+})
+
+test_that("roll_nowcast rejects inputs with a dim attribute", {
+  expect_error(
+    roll_nowcast(matrix(1:12, nrow = 3)),
     "'x' must be a numeric vector."
   )
 })

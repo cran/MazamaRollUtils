@@ -23,7 +23,7 @@ The weighting depends on how much concentrations vary within the window:
 rapidly changing conditions place more weight on the most recent hours,
 while stable conditions allow older hours to contribute more evenly.
 
-For every index in the incoming vector x, a value is returned that is the
+For every index in the incoming vector \code{x}, a value is returned that is the
 NowCast associated with that hour.
 
 This calculation is always right-aligned:
@@ -37,6 +37,9 @@ so the first 11 positions may be calculated from fewer than 12 hours.
 
 Missing values are allowed, but at least 2 valid values must be present in
 the most recent 3 hours or the result for that index will be \code{NA}.
+
+A window whose valid values are all zero returns \code{0} (there is no rate of
+change to weight by).
 
 Returned values are rounded to one decimal place.
 }

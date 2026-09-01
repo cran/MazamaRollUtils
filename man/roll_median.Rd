@@ -9,7 +9,8 @@ roll_median(
   width = 1L,
   by = 1L,
   align = c("center", "left", "right"),
-  na.rm = FALSE
+  na.rm = FALSE,
+  min_valid = NULL
 )
 }
 \arguments{
@@ -24,6 +25,12 @@ roll_median(
 
 \item{na.rm}{Logical specifying whether \code{NA} values should be removed
 before the calculations within each window.}
+
+\item{min_valid}{Integer minimum number of non-\code{NA} values that must fall
+within a window for that window to return a non-\code{NA} result. Supplying
+\code{min_valid} implies \code{NA}-tolerant counting within each window (as if
+\code{na.rm = TRUE}), regardless of \code{na.rm}. The default, \code{NULL}, applies no
+minimum.}
 }
 \value{
 Numeric vector of the same length as \code{x}.
@@ -63,4 +70,5 @@ legend("topright", lty = c(1, 1),
        col = c("goldenrod", "purple"),
        legend = c("3-hr median", "23-hr median"))
 title("3- and 23-hr Rolling median")
+
 }

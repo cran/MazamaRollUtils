@@ -54,4 +54,5 @@ x <- example_pm25$pm25
 
 x[1:10]
 roll_var(x, width = 5)[1:10]
+
 }

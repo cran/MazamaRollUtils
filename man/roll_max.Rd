@@ -9,7 +9,8 @@ roll_max(
   width = 1L,
   by = 1L,
   align = c("center", "left", "right"),
-  na.rm = FALSE
+  na.rm = FALSE,
+  min_valid = NULL
 )
 }
 \arguments{
@@ -24,6 +25,12 @@ roll_max(
 
 \item{na.rm}{Logical specifying whether \code{NA} values should be removed
 before the calculations within each window.}
+
+\item{min_valid}{Integer minimum number of non-\code{NA} values that must fall
+within a window for that window to return a non-\code{NA} result. Supplying
+\code{min_valid} implies \code{NA}-tolerant counting within each window (as if
+\code{na.rm = TRUE}), regardless of \code{na.rm}. The default, \code{NULL}, applies no
+minimum.}
 }
 \value{
 Numeric vector of the same length as \code{x}.
@@ -70,4 +77,5 @@ legend("topright", pch = c(1, 16),
        col = c("red", adjustcolor("black", 0.4)),
        legend = c("na.rm = TRUE", "na.rm = FALSE"))
 title("12-hr Rolling max with/out na.rm")
+
 }

@@ -28,6 +28,15 @@ test_that("roll_mean rejects missing or invalid weights", {
   expect_error(roll_mean(x, 3, weights = list(1, 1, 1)))
 })
 
+test_that("roll_mean rejects negative weights", {
+  x <- 1:5
+
+  expect_error(
+    roll_mean(x, 3, weights = c(1, -1, 1)),
+    "negative"
+  )
+})
+
 test_that("uniform weights give the same result as unweighted roll_mean", {
   x <- c(1, 2, 3, 4, 5)
 

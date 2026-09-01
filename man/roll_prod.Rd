@@ -9,7 +9,8 @@ roll_prod(
   width = 1L,
   by = 1L,
   align = c("center", "left", "right"),
-  na.rm = FALSE
+  na.rm = FALSE,
+  min_valid = NULL
 )
 }
 \arguments{
@@ -24,6 +25,12 @@ roll_prod(
 
 \item{na.rm}{Logical specifying whether \code{NA} values should be removed
 before the calculations within each window.}
+
+\item{min_valid}{Integer minimum number of non-\code{NA} values that must fall
+within a window for that window to return a non-\code{NA} result. Supplying
+\code{min_valid} implies \code{NA}-tolerant counting within each window (as if
+\code{na.rm = TRUE}), regardless of \code{na.rm}. The default, \code{NULL}, applies no
+minimum.}
 }
 \value{
 Numeric vector of the same length as \code{x}.
@@ -58,4 +65,5 @@ x <- example_pm25$pm25
 
 x[1:10]
 roll_prod(x, width = 5)[1:10]
+
 }

@@ -361,3 +361,27 @@ test_that("MazamaRollUtils matches zoo::rollapply when input contains NA values"
     zoo::rollapply(x, 9, FUN = var, by = 2, fill = NA, align = "center")
   )
 })
+
+# All comparisons above use odd 'width' values on purpose. For an EVEN 'width'
+# with align = "center", MazamaRollUtils and zoo disagree by design: as of
+# version 1.0.0 MazamaRollUtils anchors the window on its right half (matching
+# base R's even-window behavior), which is one position to the right of
+# zoo::rollapply(). The test below pins that intentional offset so a change to
+# the centered-window arithmetic in src/MazamaRollUtils.cpp is caught.
+
+test_that("even-width centered windows are anchored one position right of zoo", {
+  skip_if_not_installed("zoo")
+
+  x <- c(1, 2, 3, 4, 5, 6)
+
+  maz <- roll_mean(x, 4, by = 1, align = "center")
+  zoo_result <- as.numeric(
+    zoo::rollapply(x, 4, FUN = mean, by = 1, fill = NA, align = "center")
+  )
+
+  # MazamaRollUtils: NA at both ends, value at index 3 = mean(x[1:4])
+  expect_equal(maz, c(NA, NA, 2.5, 3.5, 4.5, NA))
+  # zoo: same values shifted one position to the left
+  expect_equal(zoo_result, c(NA, 2.5, 3.5, 4.5, NA, NA))
+  expect_equal(maz[-1], zoo_result[-length(zoo_result)])
+})

@@ -9,7 +9,8 @@ roll_hampel(
   width = 1L,
   by = 1L,
   align = c("center", "left", "right"),
-  na.rm = FALSE
+  na.rm = FALSE,
+  min_valid = NULL
 )
 }
 \arguments{
@@ -24,6 +25,12 @@ roll_hampel(
 
 \item{na.rm}{Logical specifying whether \code{NA} values should be removed
 before the calculations within each window.}
+
+\item{min_valid}{Integer minimum number of non-\code{NA} values that must fall
+within a window for that window to return a non-\code{NA} result. Supplying
+\code{min_valid} implies \code{NA}-tolerant counting within each window (as if
+\code{na.rm = TRUE}), regardless of \code{na.rm}. The default, \code{NULL}, applies no
+minimum.}
 }
 \value{
 Numeric vector of the same length as \code{x}.
@@ -36,7 +43,12 @@ The Hampel filter is a robust outlier detector using Median Absolute Deviation (
 
 For every index in the incoming vector \code{x}, a value is returned that
 is the Hampel function of all values in \code{x} that fall within a window of width
-\code{width}.
+\code{width}. The score at each index compares the value at that index
+(\code{x[i]}) with the median and MAD of its window: \code{abs(x[i] - median) / (1.4826 * MAD)}. Larger scores indicate values less consistent with their
+neighborhood. With \code{align = "center"} the tested value sits at the middle
+of its window; with \code{align = "left"} or \code{"right"} it sits at the window
+edge. Outlier detection (see \code{\link[=findOutliers]{findOutliers()}}) is normally done with the
+default \code{align = "center"}.
 
 The \code{align} parameter determines the alignment of the return value
 within the window. Thus:
@@ -56,4 +68,5 @@ calculations for high resolution time series data.
 \examples{
 x <- c(0, 0, 0, 1, 1, 2, 2, 4, 6, 9, 0, 0, 0)
 roll_hampel(x, 3)
+
 }

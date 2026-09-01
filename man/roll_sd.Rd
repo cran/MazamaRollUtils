@@ -55,4 +55,5 @@ x <- example_pm25$pm25
 
 x[1:10]
 roll_sd(x, width = 5)[1:10]
+
 }

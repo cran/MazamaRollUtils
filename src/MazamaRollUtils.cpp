@@ -71,7 +71,14 @@ public:
     length_ = x.size();
     half_width_ = width / 2;   // truncated division rounds down
 
-    // Initialize start and end
+    // Initialize start and end.
+    //
+    // For "center" the output index sits 'half_width_' positions from the
+    // left edge of its window (see windowIndex()). With an odd 'width' that
+    // is the exact middle; with an even 'width' the window is anchored on its
+    // right half (half_width_ elements at/left of the index, half_width_ - 1
+    // to the right), which matches base R's handling of even-length windows
+    // and is offset by one index from zoo::rollapply(align = "center").
     if (align == "left") {
       align_code_ = -1;
       start_ = 0;

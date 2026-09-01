@@ -31,7 +31,9 @@
 #' `width`, the window width, is a parameter that is passed to
 #' `roll_hampel()`.
 #'
-#' @note This function is copied from the \pkg{seismicRoll} package.
+#' @note This function is adapted from the \pkg{seismicRoll} package. It wraps
+#' this package's [roll_hampel()] and follows that package's outlier-threshold
+#' logic, but the default arguments differ (e.g. `thresholdMin = 7`).
 #'
 #' @param x Numeric vector.
 #' @param width Integer width of the rolling window.
@@ -58,7 +60,8 @@
 #' plot(a)
 #' points(o_indices, a[o_indices], pch = 16, cex = 0.8, col = 'red')
 #' title("Outlier detection using a Hampel filter")
-
+#'
+#' @export
 findOutliers <- function(
     x,
     width = 25,

@@ -60,7 +60,9 @@ outliers by setting a new threshold defined by the maximum value of
 \code{roll_hampel()}.
 }
 \note{
-This function is copied from the \pkg{seismicRoll} package.
+This function is adapted from the \pkg{seismicRoll} package. It wraps
+this package's \code{\link[=roll_hampel]{roll_hampel()}} and follows that package's outlier-threshold
+logic, but the default arguments differ (e.g. \code{thresholdMin = 7}).
 }
 \examples{
 # Noisy sinusoid with outliers
@@ -76,6 +78,7 @@ o_indices
 plot(a)
 points(o_indices, a[o_indices], pch = 16, cex = 0.8, col = 'red')
 title("Outlier detection using a Hampel filter")
+
 }
 \seealso{
 \code{\link[=roll_hampel]{roll_hampel()}}

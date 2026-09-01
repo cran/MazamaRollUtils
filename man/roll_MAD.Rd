@@ -9,7 +9,8 @@ roll_MAD(
   width = 1L,
   by = 1L,
   align = c("center", "left", "right"),
-  na.rm = FALSE
+  na.rm = FALSE,
+  min_valid = NULL
 )
 }
 \arguments{
@@ -24,6 +25,12 @@ roll_MAD(
 
 \item{na.rm}{Logical specifying whether \code{NA} values should be removed
 before the calculations within each window.}
+
+\item{min_valid}{Integer minimum number of non-\code{NA} values that must fall
+within a window for that window to return a non-\code{NA} result. Supplying
+\code{min_valid} implies \code{NA}-tolerant counting within each window (as if
+\code{na.rm = TRUE}), regardless of \code{na.rm}. The default, \code{NULL}, applies no
+minimum.}
 }
 \value{
 Numeric vector of the same length as \code{x}.
@@ -35,6 +42,12 @@ Apply a moving-window Median Absolute Deviation function to a numeric vector.
 For every index in the incoming vector \code{x}, a value is returned that
 is the Median Absolute Deviation (MAD) of all values in \code{x} that fall within
 a window of width \code{width}.
+
+The value returned is the \emph{unscaled} MAD -- the median of the absolute
+deviations from the window median, with no consistency constant applied.
+This is equivalent to \code{stats::mad(window, constant = 1)}. Note that
+\code{stats::mad()} uses \code{constant = 1.4826} by default, so values from
+\code{roll_MAD()} are smaller than the \code{stats::mad()} default by that factor.
 
 The \code{align} parameter determines the alignment of the return value
 within the window. Thus:
@@ -57,4 +70,5 @@ x <- c(0, 0, 0, 1, 1, 2, 2, 4, 6, 9, 0, 0, 0)
 roll_MAD(x, 3)
 roll_MAD(x, 5)
 roll_MAD(x, 7)
+
 }
